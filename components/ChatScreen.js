@@ -8,14 +8,16 @@ import AttachFileIcon from "@material-ui/icons/AttachFile";
 import { useCollection } from "react-firebase-hooks/firestore";
 import InsertEmoticonIcon from "@material-ui/icons/InsertEmoticon";
 import MicIcon from "@material-ui/icons/Mic";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import firebase from "firebase";
 import Message from "./Message";
 import getRecipientEmail from "../utils/getRecipientEmail";
+import TimeAgo from "timeago-react";
 
 function ChatScreen({ chat, messages }) {
   const [user] = useAuthState(auth);
   const [input, setInput] = useState("");
+  const endOfMessageRef = useRef(null);
   const router = useRouter();
   const [messagesSnapshot] = useCollection(
     db
@@ -23,6 +25,11 @@ function ChatScreen({ chat, messages }) {
       .doc(router.query.id)
       .collection("messages")
       .orderBy("timestamp", "asc")
+  );
+  const [recipientSnapshot] = useCollection(
+    db
+      .collection("users")
+      .where("email", "==", getRecipientEmail(chat.users, user))
   );
 
   const showMessages = () => {
@@ -44,6 +51,13 @@ function ChatScreen({ chat, messages }) {
     }
   };
 
+  const ScrollToBottom = () => {
+    endOfMessageRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   const sendMessage = (e) => {
     e.preventDefault();
 
@@ -63,17 +77,36 @@ function ChatScreen({ chat, messages }) {
     });
 
     setInput("");
+    ScrollToBottom();
   };
+
+  const recipient = recipientSnapshot?.docs?.[0]?.data();
 
   const recipientEmail = getRecipientEmail(chat.users, user);
 
   return (
     <Container>
       <Header>
-        <Avatar />
+        {recipient ? (
+          <Avatar src={recipient?.photoURL} />
+        ) : (
+          <Avatar src={recipientEmail[0]} />
+        )}
+
         <HeaderInformation>
           <h3>{recipientEmail}</h3>
-          <p>Last seen ...</p>
+          {recipientSnapshot ? (
+            <p>
+              Last active:{" "}
+              {recipient?.lastSeen?.toDate() ? (
+                <TimeAgo datetime={recipient?.lastSeen?.toDate()} />
+              ) : (
+                "Unavailable"
+              )}
+            </p>
+          ) : (
+            <p>Loading Last active ...</p>
+          )}
         </HeaderInformation>
         <HeaderIcons>
           <IconButton>
@@ -87,7 +120,7 @@ function ChatScreen({ chat, messages }) {
 
       <MessageContainer>
         {showMessages()}
-        <EndOfMessage />
+        <EndOfMessage ref={endOfMessageRef} />
       </MessageContainer>
 
       <InputContainer>
@@ -123,12 +156,13 @@ const HeaderInformation = styled.div`
   flex: 1;
 
   > h3 {
-    margin-bottom: 3px;
+    margin: 0 0 3px;
   }
 
   > p {
-    font-size: 14px;
+    font-size: 11px;
     color: gray;
+    margin: 0;
   }
 `;
 
@@ -140,7 +174,9 @@ const MessageContainer = styled.div`
   min-height: 90vh;
 `;
 
-const EndOfMessage = styled.div``;
+const EndOfMessage = styled.div`
+  margin-bottom: 60px;
+`;
 
 const InputContainer = styled.form`
   display: flex;
