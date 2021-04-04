@@ -1,4 +1,4 @@
-import { Avatar, Button, IconButton } from "@material-ui/core";
+import { Avatar, IconButton } from "@material-ui/core";
 import { useRouter } from "next/router";
 import { useAuthState } from "react-firebase-hooks/auth";
 import styled from "styled-components";
@@ -126,9 +126,9 @@ function ChatScreen({ chat, messages }) {
       <InputContainer>
         <InsertEmoticonIcon />
         <Input value={input} onChange={(e) => setInput(e.target.value)} />
-        <Button hidden disabled={!input} type="submit" onClick={sendMessage}>
+        <button hidden disabled={!input} type="submit" onClick={sendMessage}>
           Send Message
-        </Button>
+        </button>
         <MicIcon />
       </InputContainer>
     </Container>

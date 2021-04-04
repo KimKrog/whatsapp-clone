@@ -29,7 +29,7 @@ const MessageElement = styled.p`
   padding: 15px;
   border-radius: 8px;
   margin: 10px;
-  min-width: 60px;
+  min-width: 112px;
   position: relative;
   text-align: right;
 `;
